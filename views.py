@@ -1,28 +1,38 @@
+from main import bot
 from models import *
 
 
-def create_user():
-    first_name = input('Введите Ваше имя:')
-    last_name = input('Введите Вашу фамилию:')
-    email = input('Введите Ваш email:')
-    password = input('Введите пароль:')
-    age = input('Введите Ваш возраст:')
-    male = input('Введите Ваш пол:')
-    city = input('Введите город:')
-    Person.create(first_name=first_name, last_name=last_name, email= email, password=password, age=age,
-                  male=male, city=city)
-                
-    
-def create_complaint():
-    person = input('Введите Ваш ID:')
-    description = input('Введите описание нарушения:')
-    photo = input('Прикрепите фото нарушения:')
-    video = input('Прикрепите видео нарушения:')
-    place = input('Место нарушения:')
-    date_time = input('Введите дату и время нарушения:')
-    Complaint.create(person=person, description=description, photo=photo, video=video,
-                     place=place, date_time=date_time)
+def create_user(message):
+    bot.send_message(message.chat.id, 'Введите Ваше имя:')
+    bot.register_next_step_handler(message, set_first_name)
 
-def check_status():
-    if Complaint.approved:
-        Complaint.approved = False
+
+def set_first_name(message):
+    first_name = message.text
+    bot.send_message(message.chat.id, 'Введите Вашу фамилию:')
+    bot.register_next_step_handler(message, set_last_name, first_name=first_name)
+
+
+def set_last_name(message, first_name):
+    last_name = message.text
+    bot.send_message(message.chat.id, 'Введите Ваш email:')
+    bot.register_next_step_handler(message, set_email, first_name=first_name, last_name=last_name)
+
+
+def set_email(message, first_name, last_name):
+    email = message.text
+    bot.send_message(message.chat.id, 'Введите пароль:')
+    bot.register_next_step_handler(message, set_password, first_name=first_name, last_name=last_name, email=email)
+
+
+def set_password(message, first_name, last_name, email):
+    password = message.text
+    bot.send_message(message.chat.id, 'Введите Ваш возраст:')
+    bot.register_next_step_handler(message, set_age, first_name=first_name, last_name=last_name, email=email,
+                                   password=password)
+
+
+def set_age(message, first_name, last_name, email, password):
+    age = message.text
+    bot.send_message(message.chat.id, 'Введите Ваш пол:')
+    bot.register_next
