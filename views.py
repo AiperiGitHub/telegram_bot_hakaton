@@ -1,5 +1,8 @@
-from main import bot
+import telebot
 from models import *
+
+token = '5795074181:AAEYHOalWk9jR69mFeJvoHbo1BdPPXcym_g'
+bot = telebot.TeleBot(token)
 
 
 def create_user(message):
@@ -35,4 +38,61 @@ def set_password(message, first_name, last_name, email):
 def set_age(message, first_name, last_name, email, password):
     age = message.text
     bot.send_message(message.chat.id, 'Введите Ваш пол:')
-    bot.register_next
+    bot.register_next_step_handler(message, set_male, first_name=first_name, last_name=last_name, email=email,
+                                   password=password, age=age)
+
+
+def set_male(message, first_name, last_name, email, password, age):
+    male = message.text
+    bot.send_message(message.chat.id, 'Введите город проживания:')
+    bot.register_next_step_handler(message, set_city, first_name=first_name, last_name=last_name, email=email,
+                                   password=password, age=age, male=male)
+
+
+def set_city(message, first_name, last_name, email, password, age, male):
+    city = message.text
+
+    # create the user in the database
+    person = Person.create(
+        telegram_id=message.chat.id,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=password,
+        age=age,
+        male=male,
+        city=city
+    )
+
+    bot.send_message(message.chat.id, 'Регистрация успешно завершена.')
+
+
+def create_complaint(message):
+    bot.send_message(message.chat.id, 'Введите описание нарушения:')
+    bot.register_next_step_handler(message, set_description)
+
+
+def set_description(message):
+    description = message.text
+    bot.send_message(message.chat.id, 'Введите место нарушения:')
+    bot.register_next_step_handler(message, set_place, description=description)
+
+
+def set_place(message, description):
+    place = message.text
+    bot.send_message(message.chat.id, 'Введите дату и время нарушения (в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС):')
+    bot.register_next_step_handler(message, set_date_time, description=description, place=place)
+
+
+def set_date_time(message, description, place):
+    date_time = message.text
+    complaint = Complaint(person=Person.select().where(Person.telegram_id == message.chat.id),
+                          description=description,
+                          place=place,
+                          date_time=date_time)
+    complaint.save()
+    bot.send_message(message.chat.id, 'Жалоба успешно зарегистрирована!')
+
+
+def check_status(message):
+    pass  # TODO: Implement function for checking the status of a complaint
